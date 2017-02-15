@@ -1,6 +1,5 @@
 ﻿using System;
 using ObjectPool;
-using ObjectPool.Misc;
 
 namespace ObjectPoolAsync
 {

@@ -50,8 +50,8 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="ObjectPoolAsyncUnitTests.cs" />
-    <Compile Include="ObjectPoolUnitTests.cs" />
+    <Compile Include="LimitedObjectPoolAsyncUnitTests.cs" />
+    <Compile Include="LimitedObjectPoolUnitTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@ using ObjectPool.Misc;
 namespace ObjectPoolUnitTests
 {
     [TestClass]
-    public class ObjectPoolUnitTests
+    public class LimitedObjectPoolUnitTests
     {
         [TestMethod]
         public void ObjectPool_GetFromEmpty_ReturnsResource()

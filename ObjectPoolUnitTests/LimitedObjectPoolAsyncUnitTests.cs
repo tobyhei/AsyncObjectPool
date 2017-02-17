@@ -1,81 +1,75 @@
-﻿using System;
+﻿using ObjectPool;
+using ObjectPool.Misc;
+using ObjectPoolAsync;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ObjectPool;
-using ObjectPool.Misc;
-using ObjectPoolAsync;
+using Xunit;
 
 namespace ObjectPoolUnitTests
 {
-    [TestClass]
     public class LimitedObjectPoolAsyncUnitTests
     {
-        [TestMethod]
-        public async Task ObjectPoolAsync_GetFromUnlimited_ReturnsPooledResource()
+        private const int Range = 1000;
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task ObjectPoolAsync_GetFromUnlimited_ReturnsPooledResource(bool wait)
         {
             // Arrange
-            const int range = 1000;
             var pool = new LimitedObjectPoolAsync<Guid>(() => Optional<Guid>.Some(Guid.NewGuid()));
 
-            // Act
-            var tasks = Enumerable.Range(0, range).AsParallel().Select(async i => await AcquireAsync(pool).ConfigureAwait(false)).ToArray();
-            await Task.WhenAll(tasks);
+            var tasks = Enumerable.Range(0, Range).Select(i => AcquireAsync(pool, wait)).ToArray();
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
             var guids = tasks.Select(t => t.Result).FilterValues().ToArray();
             var uniqueGuids = new HashSet<Guid>(guids);
 
             // Assert
-            Assert.AreEqual(range, guids.Length);
-            Assert.AreEqual(range, uniqueGuids.Count);
+            Assert.Equal(Range, guids.Length);
+            Assert.InRange(uniqueGuids.Count, 1, Range);
         }
 
-        [TestMethod]
-        public async Task ObjectPoolAsync_GetFromLimited_ReturnsPooledResource()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public async Task ObjectPoolAsync_GetFromLimited_ReturnsPooledResource(bool wait)
         {
             // Arrange
-            const int range = 1000;
-            const int contentionLevel = 20;
-            const int totalUniqueGuids = range / contentionLevel;
+            const int totalUniqueGuids = 50;
             var pool = ObjectPoolAsyncBuilder.CreateLimited(Guid.NewGuid, totalLimit: totalUniqueGuids);
 
             // Act
-            var tasks = Enumerable.Range(0, range).AsParallel().Select(async i => await AcquireAsync(pool).ConfigureAwait(false)).ToArray();
-            await Task.WhenAll(tasks);
+            var tasks = Enumerable.Range(0, Range).Select(i => AcquireAsync(pool, wait)).ToArray();
+
+            await Task.WhenAll(tasks).ConfigureAwait(false);
             var guids = tasks.Select(t => t.Result).FilterValues().ToArray();
             var uniqueGuids = new HashSet<Guid>(guids);
 
             // Assert
-            Assert.AreEqual(range, guids.Length);
-            Assert.AreEqual(totalUniqueGuids, uniqueGuids.Count);
+            Assert.Equal(Range, guids.Length);
+            Assert.InRange(uniqueGuids.Count, 1, totalUniqueGuids);
         }
 
-        private static Optional<Guid> TryAcquire(LimitedObjectPoolAsync<Guid> pool)
+        private static async Task<Optional<Guid>> AcquireAsync(LimitedObjectPoolAsync<Guid> pool, bool wait)
         {
-            Func<Pooled<Guid>, Guid> unwrapFunc = pooled =>
+            async Task<Guid> Unwrap(Pooled<Guid> pooled)
             {
                 using (pooled)
                 {
+                    if (wait)
+                    {
+                        await Task.Delay(1);
+                    }
                     return pooled.Resource;
                 }
-            };
-
-            return pool.TryGet().Transform(unwrapFunc);
-        }
-
-        private static async Task<Optional<Guid>> AcquireAsync(LimitedObjectPoolAsync<Guid> pool)
-        {
-            Func<Pooled<Guid>, Guid> unwrapFunc = pooled =>
-            {
-                using (pooled)
-                {
-                    return pooled.Resource;
-                }
-            };
+            }
 
             var result = await pool.TryGetAsync().ConfigureAwait(false);
 
-            return result.Transform(unwrapFunc);
+            return await result.TransformAsync<Guid>(Unwrap);
         }
     }
 }

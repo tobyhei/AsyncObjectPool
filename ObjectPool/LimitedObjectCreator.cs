@@ -1,5 +1,5 @@
-﻿using System;
-using ObjectPool.Misc;
+﻿using ObjectPool.Misc;
+using System;
 
 namespace ObjectPool
 {

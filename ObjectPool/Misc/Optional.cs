@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ObjectPool.Misc
 {
@@ -47,8 +48,21 @@ namespace ObjectPool.Misc
         public static Optional<T> None()
             => new Optional<T>(false);
 
+        public T Unwrap()
+        {
+            if (!HasValue)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return Value;
+        }
+
         // TODO can't remember what chaining/transforming nones is called, rename to its proper name
         public Optional<TOther> Transform<TOther>(Func<T, TOther> createFunc)
             => HasValue ? Optional<TOther>.Some(createFunc(Value)) : Optional<TOther>.None();
+
+        public async Task<Optional<TOther>> TransformAsync<TOther>(Func<T, Task<TOther>> createFunc)
+            => HasValue ? Optional<TOther>.Some(await createFunc(Value).ConfigureAwait(false)) : Optional<TOther>.None();
     }
 }

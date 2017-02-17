@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Nito.AsyncEx;
+using ObjectPool;
+using ObjectPool.Misc;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Nito.AsyncEx;
-using ObjectPool;
-using ObjectPool.Misc;
 
 namespace ObjectPoolAsync
 {
@@ -80,15 +80,17 @@ namespace ObjectPoolAsync
         }
 
         private Pooled<T> CreatePooled(T resource)
-            => new Pooled<T>(() => ReturnResource(resource), resource);
-
-        private void ReturnResource(T resource)
         {
-            using (_monitor.Enter())
+            void ReturnResource()
             {
-                _queue.Enqueue(resource);
-                _monitor.Pulse();
+                using (_monitor.Enter())
+                {
+                    _queue.Enqueue(resource);
+                    _monitor.Pulse();
+                }
             }
+
+            return new Pooled<T>(() => ReturnResource(), resource);
         }
     }
 }

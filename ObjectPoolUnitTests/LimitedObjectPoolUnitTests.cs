@@ -1,14 +1,13 @@
-﻿using System;
+﻿using ObjectPool.Misc;
+using System;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using ObjectPool.Misc;
+using Xunit;
 
 namespace ObjectPoolUnitTests
 {
-    [TestClass]
     public class LimitedObjectPoolUnitTests
     {
-        [TestMethod]
+        [Fact]
         public void ObjectPool_GetFromEmpty_ReturnsResource()
         {
             // Arrange
@@ -18,7 +17,7 @@ namespace ObjectPoolUnitTests
             var optionalGuids = Enumerable.Range(1, 1000).Select(i => pool.Get()).ToList();
 
             // Assert
-            Assert.IsTrue(optionalGuids.All(o => o.Resource != Guid.Empty));
+            Assert.True(optionalGuids.All(o => o.Resource != Guid.Empty));
         }
     }
 }

@@ -1,7 +1,7 @@
-﻿using System;
+﻿using ObjectPool.Misc;
+using System;
 using System.Collections.Generic;
 using System.Threading;
-using ObjectPool.Misc;
 
 namespace ObjectPool
 {

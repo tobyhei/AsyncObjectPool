@@ -1,5 +1,5 @@
-﻿using System;
-using ObjectPool;
+﻿using ObjectPool;
+using System;
 
 namespace ObjectPoolAsync
 {
